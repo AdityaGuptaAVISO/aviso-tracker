@@ -160,15 +160,27 @@ track links clicked
 """
 @app.route("/api/track-link")
 def track_link():
-    data = request.args
-    sender_address = data.get('from', None)
-    recipient_address = data.get('to', None)
+    data = json.loads(request.data)
+    print(data)
+    sender_address = data['sender_address']
+    recipient_address = data['recipient_address']
     urls = data.get('url', None)
     
     """ save the link hash and url to the database """
     link_collection = mongo_db['link-collection']
     db_list = []
     sha_list = []
+
+    import pyshorteners
+    # long_url = input("Enter the URL to shorten: ")
+    
+    # #TinyURL shortener service
+    # type_tiny = pyshorteners.Shortener()
+    # short_url = type_tiny.tinyurl.short(long_url)
+    
+    # print("The Shortened URL is: " + short_url)
+
+
     for url in urls:
         link_hash = hashlib.sha1(
                     '{}:{}:{}'.format(
@@ -176,7 +188,11 @@ def track_link():
                         recipient_address, 
                         url
                     ).encode('utf-8')).hexdigest()
-        sha_list.append(base_url+'open-link/'+str(link_hash))
+        long_url = base_url+'open-link?hash='+str(link_hash)
+        type_tiny = pyshorteners.Shortener()
+        short_url = type_tiny.tinyurl.short(long_url)
+        print("The Shortened URL is: " + short_url)
+        sha_list.append(short_url)
         db_list.append({
             'link_hash': link_hash,
             'sender_address': sender_address,
@@ -188,11 +204,16 @@ def track_link():
     link_collection.insert_many(db_list)
     return Response(json.dumps({'redirect_links': sha_list}), mimetype="application/json")
 
-@app.route("/open-link/<link_hash>")
-def open_link(link_hash):
+@app.route("/open-link")
+def open_link():
+    # print(link_hash)
+    link_hash = request.args.get('hash', None)
+    print(link_hash)
     link_collection = mongo_db['link-collection']
-    link_collection.update_one({'link_hash': link_hash}, {'$inc': {'clicks': 1}}, True)
-    link = link_collection.find_one({'link_hash': link_hash})
+    # link_collection.update_one({'link_hash': link_hash}, {'$inc': {'clicks': 1}}, True)
+    link = link_collection.find_one_and_update({'link_hash': link_hash}, return_document=pymongo.ReturnDocument.AFTER, update={'$inc': {'clicks': 1}})
+    # link.update({'clicks': link['clicks'] + 1})
+    print(link)
     return redirect(link['url'], 302)
 
 
@@ -205,5 +226,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if 'run' in args.command:
-        app.run()
+        app.run(debug=debug)
     
