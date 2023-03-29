@@ -2,6 +2,11 @@
     "name": "Aviso Mail Tracker",
     "version": "0.0.1",
     "manifest_version": 3,
+    "icons": {
+        "16": "AppLogo.png",
+        "48": "AppLogo.png",
+        "128": "AppLogo.png"
+    },
     "content_security_policy": {
         "extension_pages": "script-src 'self'; object-src 'self'; script-src-elem 'self' 'unsafe-inline' https://music.yandex.ru/;"
     },
@@ -9,11 +14,8 @@
         "client_id": "946879539129-m5url1u1dparj9qkstu3iu1nqfgvgi5m.apps.googleusercontent.com",
         "scopes": ["profile email", "https://www.googleapis.com/auth/contacts"]
     },
-    "background": {
-        "service_worker": "./background.js"
-    },
     "web_accessible_resources": [{
-        "resources": ["./script.js"],
+        "resources": [],
         "matches": [],
         "extension_ids": []
     }],
@@ -25,3 +27,5 @@
         "identity.email"
     ]
 }
+
+    
