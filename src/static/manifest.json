@@ -3,29 +3,52 @@
     "version": "0.0.1",
     "manifest_version": 3,
     "icons": {
-        "16": "AppLogo.png",
-        "48": "AppLogo.png",
-        "128": "AppLogo.png"
-    },
-    "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self'; script-src-elem 'self' 'unsafe-inline' https://music.yandex.ru/;"
+      "16": "AppLogo.png",
+      "48": "AppLogo.png",
+      "128": "AppLogo.png"
     },
     "oauth2": {
-        "client_id": "946879539129-m5url1u1dparj9qkstu3iu1nqfgvgi5m.apps.googleusercontent.com",
-        "scopes": ["profile email", "https://www.googleapis.com/auth/contacts"]
+        "client_id": "36920512029-4umvf35aq3ml6vhild9bvk0uu441mrl1.apps.googleusercontent.com",
+        "scopes": [ "https://www.googleapis.com/auth/gmail.modify"]
     },
     "web_accessible_resources": [{
-        "resources": [],
-        "matches": [],
-        "extension_ids": []
+      "resources": [],
+      "matches": ["http://*/*", "https://*/*"],
+      "extension_ids": []
     }],
     "action": {
-        "default_popup": "popup.html"
     },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "options_page": "options.html",
+    "content_scripts": [
+        {
+          "matches": ["https://mail.google.com/"],
+          "js": ["contentScript.js"]
+        }
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ],
     "permissions": [
-        "identity",
-        "identity.email"
-    ]
-}
-
-    
+      "identity",
+      "identity.email",
+      "storage",
+      "activeTab",
+      "declarativeContent",
+      "tabs",
+      "scripting"
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
+    },
+    "commands": {
+      "_execute_action": {
+        "suggested_key": {
+          "default": "Ctrl+B",
+          "mac": "Command+B"
+        }
+      }
+    }
+  }
