@@ -1,0 +1,7 @@
+# celery==3.0.25
+Django==1.8
+# django-celery==3.0.21
+djangorestframework==2.3.13
+pymongo==3.13.0
+requests==2.27.1
+pyshorteners==1.0.1
