@@ -2,7 +2,6 @@ import copy
 import hashlib
 import json
 import time
-# import celery
 import pymongo
 from django.shortcuts import redirect, render
 
@@ -22,9 +21,7 @@ from django.conf import settings
 base_url = 'http://localhost:5000/track/'
 mongo_client = pymongo.MongoClient(settings.MONGO_SERVER, 27017, connect=False)
 mongo_db = mongo_client[settings.MONGO_DB]
-# app = celery.Celery("aviso_tracker")
-# celery = celery.Celery('track.views', broker=settings.CELERY_BROKER_URL)
-# celery.conf.update(settings)
+
 
 
 def consume_open(event_record):

@@ -89,10 +89,3 @@ localhost mongo configuration
 MONGO_SERVER = 'localhost'
 MONGO_PORT = 27017
 MONGO_DB = 'aviso_tracker'
-
-
-"""
-localhost celery configuration
-"""
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
