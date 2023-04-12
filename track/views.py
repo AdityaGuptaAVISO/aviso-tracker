@@ -77,10 +77,15 @@ def pixel(request):
 # @api_view(['POST'])
 @csrf_exempt
 def generate_pixel(request):
+    data = json.loads(request.body)
+    print(data["to"])
+    for i in data["to"]:
+        print (i)
+    # print(i for i in data["to"])
     event_record = {
-        'to_address': request.GET.get('to', None),
-        'from_address': request.GET.get('from', None),
-        'subject': request.GET.get('subject', None),
+        'to_address': data["to"],
+        'from_address': data["from"],
+        'subject': data["subject"],
         'sent_date': int(time.time()),
         'opens': 0,
     }
@@ -148,16 +153,6 @@ def track_link(request):
     sha_list = []
 
     import pyshorteners
-    s = pyshorteners.Shortener()
-    print(s.tinyurl.short('http://www.google.com'))
-    # long_url = input("Enter the URL to shorten: ")
-    
-    # #TinyURL shortener service
-    # type_tiny = pyshorteners.Shortener()
-    # short_url = type_tiny.tinyurl.short(long_url)
-    
-    # print("The Shortened URL is: " + short_url)
-
 
     for url in urls:
         link_hash = hashlib.sha1(
