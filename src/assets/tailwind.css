@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    height: 20%;
+    width: 20%;
+}
+
+.rusty-zone-element {
+    border: 5px solid red;
+}

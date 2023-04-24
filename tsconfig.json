@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "jsx": "react",
+        "module": "es6",
+        "target": "es6",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "esModuleInterop": true
+        
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "./declaration.d.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
