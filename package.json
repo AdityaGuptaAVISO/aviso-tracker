@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "scripts": {
         "watch": "webpack --watch --progress --config webpack.dev.js",
-        "build": "webpack --watch --progress --config webpack.prod.js"
+        "build": "webpack --progress --config webpack.prod.js"
     },
     "dependencies": {
         "autoprefixer": "^10.4.14",
@@ -23,6 +23,8 @@
         "postcss-loader": "^7.1.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "sass": "^1.62.0",
+        "sass-loader": "^13.2.2",
         "style-loader": "^3.3.2",
         "ts-loader": "^9.4.2",
         "typescript": "^5.0.2",

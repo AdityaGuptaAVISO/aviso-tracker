@@ -10,7 +10,9 @@ module.exports = {
         popup: path.resolve('src/popup/index.tsx'),
         options: path.resolve('src/options/index.tsx'),
         background: path.resolve('src/background/background.ts'),
-        contentScript: path.resolve('src/contentScript/contentScript.ts'),
+        fetchInfoScript: path.resolve('src/contentScript/fetchInfoScript.ts'),
+        contentScript: path.resolve('src/contentScript/index.ts'),
+        dashboard: path.resolve('src/dashboard/index.tsx'),
         newTab: path.resolve('src/tabs/index.tsx'),
     },
     module: {
@@ -42,6 +44,17 @@ module.exports = {
                 ],
             },
             {
+                test: /\.scss$/,
+                use: [
+                    {
+                        loader:'css-loader'
+                    },
+                    {
+                        loader: 'sass-loader'
+                    }
+                ],
+            },
+            {
                 type: 'assets/resource',
                 test: /\.(png|jpg|jpeg|gif|woff|woff2|tff|eot|svg)$/,
             },
@@ -70,6 +83,7 @@ module.exports = {
         ...getHtmlPlugins([
             'popup',
             'options',
+            'dashboard',
             'newTab'
         ])
     ],
@@ -82,7 +96,9 @@ module.exports = {
     },
     optimization: {
         splitChunks: {
-            chunks: 'all',
+            chunks(chunk){
+                return chunk.name !== 'contentScript';
+            }
         }
     }
 }

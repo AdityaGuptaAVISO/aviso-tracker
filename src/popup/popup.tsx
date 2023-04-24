@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import './popup.css';
+import style from './popup.scss';
+import { googleSignIn } from '../utils/oauthService';
+import { getUserInfo } from '../utils/storage';
 
 const Popup = () =>{
     const [token, setToken] = useState<string>('');
+    const [userInfo, setUserInfo] = useState<any>(undefined);
+
+    useEffect(() => {
+        chrome.storage.sync.get()
+        setUserInfo(getUserInfo());
+    })
 
     const doSignIn=()=>{
-        chrome.runtime.sendMessage({message: 'get_access_token'}, (response)=> {
-            console.log("printing token" +response);
-            setToken(response)
-        });
+        googleSignIn();
     }
 
     const doSignOut=()=>{
@@ -25,10 +30,19 @@ const Popup = () =>{
     }
 
     return (
-        <div>
-            <h1> Aviso Mail Tracker</h1>
-            <button className='signin-btn' onClick={doSignIn}>SignIn</button>
-            <button className='logout' onClick={doSignOut}>Logout</button>
+        <div className='aviso-tracker-popup'>
+            <div className='warning'>
+                <div className='warning-header'>
+                    <img className='warning-header-icon' src='./logo.png'/>
+                </div>
+                <div className='warning-contect'>
+                    <h1> Aviso Mail Tracker</h1>
+                    <button className='signin-btn' onClick={doSignIn}>SignIn</button>
+                    <button className='logout' onClick={doSignOut}>Logout</button>
+                </div>
+                
+            </div>
+            
         </div>
     )
 }

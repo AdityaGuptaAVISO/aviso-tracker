@@ -9,25 +9,16 @@
     },
     "oauth2": {
         "client_id": "36920512029-4umvf35aq3ml6vhild9bvk0uu441mrl1.apps.googleusercontent.com",
-        "scopes": [ "https://www.googleapis.com/auth/gmail.modify"]
+        "scopes": [ "https://mail.google.com/"]
     },
-    "web_accessible_resources": [{
-      "resources": [],
-      "matches": ["http://*/*", "https://*/*"],
-      "extension_ids": []
-    }],
     "action": {
+      "default_popup": "popup.html"
     },
     "background": {
-      "service_worker": "background.js"
+      "service_worker": "background.js",
+      "type": "module"
     },
     "options_page": "options.html",
-    "content_scripts": [
-        {
-          "matches": ["https://mail.google.com/"],
-          "js": ["contentScript.js"]
-        }
-    ],
     "host_permissions": [
       "<all_urls>"
     ],
@@ -38,7 +29,9 @@
       "activeTab",
       "declarativeContent",
       "tabs",
-      "scripting"
+      "scripting",
+      "browsingData",
+      "nativeMessaging"
     ],
     "content_security_policy": {
         "extension_pages": "script-src 'self'; object-src 'self';"
