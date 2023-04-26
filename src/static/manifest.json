@@ -1,0 +1,47 @@
+{
+    "name": "Aviso Mail Tracker",
+    "version": "0.0.1",
+    "manifest_version": 3,
+    "icons": {
+      "16": "AppLogo.png",
+      "48": "AppLogo.png",
+      "128": "AppLogo.png"
+    },
+    "oauth2": {
+        "client_id": "36920512029-4umvf35aq3ml6vhild9bvk0uu441mrl1.apps.googleusercontent.com",
+        "scopes": [ "https://mail.google.com/"]
+    },
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "background.js",
+      "type": "module"
+    },
+    "options_page": "options.html",
+    "host_permissions": [
+      "<all_urls>"
+    ],
+    "permissions": [
+      "identity",
+      "identity.email",
+      "storage",
+      "activeTab",
+      "declarativeContent",
+      "tabs",
+      "scripting",
+      "browsingData",
+      "nativeMessaging"
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
+    },
+    "commands": {
+      "_execute_action": {
+        "suggested_key": {
+          "default": "Ctrl+B",
+          "mac": "Command+B"
+        }
+      }
+    }
+  }

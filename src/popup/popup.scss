@@ -1,0 +1,23 @@
+body {
+    height: 300px;
+    width: 266px;
+    background-color: whitesmoke;
+    margin: 0px;
+}
+
+
+.aviso-tracker-popup{
+
+
+    .warning{
+        &-header{
+            background-color: red;
+            &-icon{
+                height: 32px;
+                width: 32px;
+            }
+        }
+    }
+}
+
+
