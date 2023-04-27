@@ -1,4 +1,3 @@
-import axios from "axios";
 import { getLinkId } from "../utils/backendService";
 
 
@@ -45,6 +44,9 @@ if(initialize===undefined){
           console.log('payload:',payload)
           getLinkId(payload).then((res:any)=>{
             console.log("test",res)
+            const mailbody: any = document.querySelector('[aria-label="Message Body"]')
+            var imgHtml = `<img id='aviso-img' alt='aviso-tracker' src="aviso-tracker.aviso.com/track/pixel.png?sh=${res.id}" />`;
+            iframe.insertAdjacentHTML('beforeend',imgHtml);
             // resolve(res)
         }).catch(err=> 
           console.log("test",err)
