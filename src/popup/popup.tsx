@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import style from './popup.scss';
+import  './popup.scss';
+
 import { googleSignIn } from '../utils/oauthService';
 import { getUserInfo } from '../utils/storage';
 
@@ -40,7 +41,6 @@ const Popup = () =>{
                     <button className='signin-btn' onClick={doSignIn}>SignIn</button>
                     <button className='logout' onClick={doSignOut}>Logout</button>
                 </div>
-                
             </div>
             
         </div>

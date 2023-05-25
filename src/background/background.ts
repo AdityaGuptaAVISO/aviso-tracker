@@ -41,26 +41,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 chrome.runtime.onInstalled.addListener((details)=>{
     console.log("I just installed chrome extension");
 
-    chrome.action.setBadgeText({
-        text: "Aviso",
-    });
+    // chrome.action.setBadgeText({
+    //     text: "Aviso",
+    // });
 
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.runtime.setUninstallURL('');
     }
 })
-
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) =>{
-    if (tab.url && tab.url.startsWith("https://mail.google.com/mail/u/") && tab.url.includes("compose") ) {
-
-        if(changeInfo.status === 'complete') {
-            chrome.scripting.executeScript({
-                target: {tabId} ,
-                files: ['fetchInfoScript.js']
-            });
-        }
-        
-    }
-   
-});

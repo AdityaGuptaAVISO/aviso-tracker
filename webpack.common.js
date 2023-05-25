@@ -45,14 +45,7 @@ module.exports = {
             },
             {
                 test: /\.scss$/,
-                use: [
-                    {
-                        loader:'css-loader'
-                    },
-                    {
-                        loader: 'sass-loader'
-                    }
-                ],
+                use: ['style-loader','css-loader','sass-loader'],
             },
             {
                 type: 'assets/resource',
@@ -88,7 +81,7 @@ module.exports = {
         ])
     ],
     resolve: {
-        extensions: ['.tsx', '.js', '.ts']
+        extensions: ['.tsx', '.js', '.ts', 'scss']
     },
     output: {
         filename: '[name].js',
