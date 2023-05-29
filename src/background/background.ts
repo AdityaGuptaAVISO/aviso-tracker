@@ -1,5 +1,3 @@
-
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("request :");
     console.log(request);
@@ -49,3 +47,25 @@ chrome.runtime.onInstalled.addListener((details)=>{
         chrome.runtime.setUninstallURL('');
     }
 })
+
+let injectScript: boolean = false;
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) =>{
+    if (tab.url && tab.url.startsWith("https://mail.google.com/") && tab.url.includes("compose") ) {
+
+        if(changeInfo.status === 'complete'){
+            
+           //excuting contentScript
+            chrome.scripting.executeScript({
+                target: {tabId} ,
+                files: ['fetchInfoScript.js'],
+            }).then(re=>{
+                console.log('test',re);
+                injectScript= true
+            });
+            
+        }
+    }
+
+   
+});

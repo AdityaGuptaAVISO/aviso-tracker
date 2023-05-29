@@ -3,19 +3,48 @@ import { getLinkId } from "../utils/backendService";
 
 let initialize:any;
 
+const insertImage = (index) => {
+  const linkElement = document.createElement('a');
+  linkElement.href = `https://aviso-tracker.aviso.com/track/pixel.png?sh=${"res.id"}`;
+ 
+  const imageElement = document.createElement('img');
+  imageElement.src = `https://aviso-tracker.aviso.com/track/pixel.png?sh=${"res.id"}`;
+  imageElement.alt = 'aviso-tracker';
+ 
+  linkElement.appendChild(imageElement);
+
+  getMailBody()[index].insertAdjacentElement('beforeend',linkElement);
+}
+
+const getMailBody = ()=> {
+  return document.querySelectorAll('.Am.Al.editable.LW-avf.tS-tW')
+}
+
+const setMailBody = (mailBody:any, index:number) =>{
+  const testFrame = mailBody.querySelector('[alt="aviso-tracker"]');
+  if(!testFrame){
+    insertImage(index)
+  }
+}
+
 if(initialize===undefined){  
   initialize = () => {
     
     let recipients= [];
-    const recipientsField = document.querySelector('.fX.aiL');
-    // const subjectField = document.querySelector('[name="subjectbox"]');
     
     var iframe:any = document.querySelector('.Am.Al.editable.LW-avf.tS-tW');
-    
+
+    const composeButton:any = document.querySelector('.T-I.T-I-KE.L3');
+    composeButton?.addEventListener('click', (event:any)=>{          
+      setTimeout(()=>{
+        const mailBody:any = getMailBody()
+        mailBody.forEach(setMailBody)
+      },2000)
+    })
+
     if(iframe){
       iframe.addEventListener('focus', (event:any) => {
         const mailTracker:any = document.getElementById('aviso-img');
-        console.log('mail:',mailTracker)
         if(mailTracker){
           return;
         }
@@ -47,4 +76,5 @@ if(initialize===undefined){
   }
   
 }
-document.addEventListener('DOMContentLoaded', initialize);
+
+initialize();
