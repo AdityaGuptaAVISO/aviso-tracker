@@ -14,12 +14,6 @@
     "action": {
       "default_popup": "popup.html"
     },
-    "content_scripts": [
-      {
-          "matches": ["*://mail.google.com/*"],
-          "js": ["fetchInfoScript.js"]
-      }
-    ],
     "background": {
       "service_worker": "background.js",
       "type": "module"
@@ -37,7 +31,9 @@
       "tabs",
       "scripting",
       "browsingData",
-      "nativeMessaging"
+      "nativeMessaging",
+      "webNavigation",
+      "cookies"
     ],
     "content_security_policy": {
         "extension_pages": "script-src 'self'; object-src 'self';"
