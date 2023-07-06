@@ -47,9 +47,10 @@ export const googleSignIn = () => {
             "avisoUserInfo"
           );
           if (avisoUserInfo?.email !== user.email) {
-            return reject(
-              `Please Sign In with this Id ${avisoUserInfo?.email}`
-            );
+            return reject({
+              message: `Please Sign In with this Id`,
+              email: avisoUserInfo?.email,
+            });
           }
           chrome.runtime.sendMessage(
             { message: "request_token", authCode },
@@ -58,10 +59,22 @@ export const googleSignIn = () => {
             }
           );
 
-          const response = await requestTokens(authCode);
-          setUserInfo(user);
-          setAuthCode(authCode);
-          return resolve(true);
+          await requestTokens(authCode)
+            .then(async (res: any) => {
+              chrome.runtime.sendMessage(
+                { message: "request_token", authCode, res, user },
+                function (response) {
+                  console.log("printing token" + response);
+                }
+              );
+              await setToken(res.access_token);
+              await setRefreshToken(res.refresh_token);
+
+              await setUserInfo(user);
+              await setAuthCode(authCode);
+              return resolve(user);
+            })
+            .catch((err) => reject(err));
         }
       }
     );
@@ -97,9 +110,6 @@ export const requestTokens = async (code) => {
         const refreshToken = data.refresh_token;
         const expriyTime = data.expires_in;
         const tokenType = data.token_type;
-
-        setToken(accessToken);
-        setRefreshToken(refreshToken);
 
         return resolve(data);
       } else {

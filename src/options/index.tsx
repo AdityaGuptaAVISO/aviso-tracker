@@ -14,4 +14,6 @@ function init() {
     root.render(<Options />);
 }
 
-init();
+// init();
+
+chrome.tabs.create({active: true, url: "popup.html"});

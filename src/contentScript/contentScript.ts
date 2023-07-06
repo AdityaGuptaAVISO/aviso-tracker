@@ -1,5 +1,3 @@
-console.log("testing");
-
 import {
   getRecentSentMail,
   refreshAccessToken,
@@ -103,11 +101,16 @@ const requestMailInfo = (uuid: string, subject: string) => {
           current_tenant: userInfo.current_tenant,
         };
 
-        // send the data to service worker
-        chrome.runtime.sendMessage(
-          { message: "send_payload", payload },
-          (res) => {
-            console.log("bg", res);
+        await chrome.runtime.sendMessage(
+          { message: "validate" },
+          async (res) => {
+            console.log("reps", res);
+            await chrome.runtime.sendMessage(
+              { message: "send_payload", payload },
+              (res) => {
+                console.log("bg", res);
+              }
+            );
           }
         );
 
@@ -151,7 +154,7 @@ const setComposeButton = async () => {
         setSendButton();
       }, 1000);
     });
-    dialog.close();
+    dialog?.close();
   } else {
     if (dialog) {
       dialog.showModal();
@@ -252,12 +255,6 @@ async function init() {
 
 init();
 
-(async () => {
-  const response = await chrome.runtime.sendMessage({ message: "validate" });
-  // do something with response here, not outside the function
-  console.log("BG:", response);
-})();
-
 const showModal = () => {
   const modal = document.createElement("dialog");
   modal.setAttribute(
@@ -338,5 +335,3 @@ const insertButton = () => {
     searchBox.insertAdjacentElement("afterend", button);
   }
 };
-
-// insertButton();

@@ -1,18 +1,28 @@
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  console.log("request :");
-  console.log(request);
-  console.log(sender);
-  console.log("sendResponse", sendResponse);
-  if (request.message === "send_payload") {
-    console.log("bg", request.payload);
-    sendMailInfo(request.payload);
-  } else if (request.message === "validate") {
-    const { cookie } = await chrome.storage.sync.get("cookie");
-    const { domain }: any = await chrome.storage.sync.get("domain");
+  switch (request.message) {
+    case "send_payload":
+      sendMailInfo(request.payload)
+        .then((res) => {
+          console.log(res);
+          sendResponse({ message: "success", payload: res });
+        })
+        .catch((err) => {
+          sendResponse({ message: "failed", payload: err });
+        });
+      break;
+    case "validate":
+      const { cookie } = await chrome.storage.sync.get("cookie");
+      const { domain }: any = await chrome.storage.sync.get("domain");
 
-    const response = await whoAmI(domain, cookie);
-
-    sendResponse(response);
+      await whoAmI(domain, cookie)
+        .then((res) => {
+          console.log(res);
+          sendResponse({ message: "success", payload: res });
+        })
+        .catch((err) => {
+          sendResponse({ message: "failed", payload: err });
+        });
+      break;
   }
 });
 
@@ -27,22 +37,40 @@ const whoAmI = (domain, cookie) => {
       },
     })
       .then(async (res: Response) => {
-        console.log("res:", res);
         if (res.ok && res.status) {
           return res.json();
         } else {
-          if (res.status >= 400) {
+          if (res.status >= 400 || res.status < 500) {
             await chrome.storage.sync.remove("cookie");
             await chrome.storage.sync.remove("avisoUserInfo");
             chrome.storage.sync.set({ isSignedIn: false }, () => {
-              console.log("clear the cookies");
+              console.log("isSignedIn the cookies");
             });
+            let message = "Failed to login";
+            switch (res.status) {
+              case 401:
+                message = "Please verify login";
+                break;
+              case 430:
+                message =
+                  "Please enter the validation code to continue. Check your email.";
+                break;
+              case 400:
+                message =
+                  "Something went wrong. Please quit the app and re-launch again.";
+                break;
+            }
+            chrome.runtime.sendMessage(
+              { action: "Failed", error: { message } },
+              function (response) {
+                console.log("Response from content script:", response);
+              }
+            );
             return reject(res);
           }
         }
       })
       .then((data: any) => {
-        console.log("data:", data);
         const avisoUserInfo = {
           currentName: data.currentName,
           currentUserId: data.currentUserId,
@@ -59,8 +87,7 @@ const whoAmI = (domain, cookie) => {
           console.log("cookie stored successfully");
         });
         chrome.runtime.sendMessage(
-          "hccaghdflcdhmnenedpopanbdjjnmden",
-          { message: "Hello from background!", data },
+          { action: "logged_in", avisoUserInfo },
           function (response) {
             console.log("Response from content script:", response);
           }
@@ -86,23 +113,41 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  const { domain }: any = await chrome.storage.sync.get("domain");
-  if (tab.url && tab.url.startsWith(domain)) {
+  let { domain }: any = await chrome.storage.sync.get("domain");
+
+  if (tab.url && domain && tab.url.includes(domain.split("://")[1])) {
     // Check cookieStoreId based on the tabId
+    if (`${tab.url.split(".com")[0]}.com` !== domain) {
+      domain = `${tab.url.split(".com")[0]}.com`;
+      chrome.storage.sync.set({ domain }, async () => {
+        const userInfo = await chrome.storage.sync.get("userInfo");
+      });
+    }
     if (changeInfo.status === "complete") {
       const { cookie } = await chrome.storage.sync.get("cookie");
       if (!cookie && domain !== "") {
         chrome.cookies.getAll({ url: domain }, function (cookies) {
           // Handle the captured cookies here or send them to the content script
-          console.log("CK", cookies);
+
           const cookie = Object.entries(cookies)
             .map(([name, value]) => {
               return `${value.name}=${value.value}`;
             })
             .join("; ");
 
-          // chrome.runtime.sendMessage({ cookie });
-          whoAmI(domain, cookie);
+          (async () => {
+            const res = await whoAmI(domain, cookie);
+            const [tab] = await chrome.tabs.query({
+              active: true,
+              lastFocusedWindow: true,
+            });
+            const response = await chrome.tabs.sendMessage(tab.id, {
+              message: "logged_in",
+              res,
+            });
+
+            console.log(response);
+          })();
         });
       }
     }

@@ -1,8 +1,7 @@
 body {
-    height: 250px;
-    width: 266px;
+    width: 100%;
     background-color: whitesmoke;
-    margin: 0px;
+    margin: 8px;
 }
 
 
@@ -11,7 +10,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 1rem;
-    
+
     .button {
         margin-top: 2rem;
         display: inline-block;
@@ -40,20 +39,28 @@ body {
 
     .error {
         color: #D8000C;
-        margin-left: 1rem;
-        margin-right: 1rem;
+        padding: 1rem;
+        font-size: 1rem;
     }
 
     .header {
+        width: 62%;
+        height: 15%;
         display: flex;
         justify-content: space-evenly;
         align-items: center;
+        flex-direction: column;
+        margin-bottom: 1rem;
+        margin-top: 4rem;
 
         &-icon {
-            height: 32px;
-            width: 34px;
+            height: 5rem;
+            width: 6rem;
         }
     }
+
+
+
 
     .warning {
         &-content {
@@ -62,7 +69,16 @@ body {
             flex-direction: column;
         }
 
-        .custom-domain-hint {}
+        .warning-input-box {
+            width: 20rem;
+            color: black;
+            font-size: 1.2rem;
+        }
+
+        .custom-domain-hint {
+            color: black;
+            font-size: 1rem;
+        }
 
         $white: #fff;
         $google-blue: #4285f4;
@@ -135,6 +151,19 @@ body {
         flex-direction: column;
         padding: 1rem 1rem;
 
+        .profile {
+            &-container {
+                display: flex;
+                align-self: center;
+            }
+
+            &-image {
+                height: 4rem;
+                width: 4rem;
+                border-radius: 5rem;
+            }
+        }
+
         .card {
             margin-top: 1rem;
             margin-bottom: 1rem;
@@ -157,19 +186,20 @@ body {
 
             &-value {
                 cursor: default;
+                color: darkslategrey;
                 -webkit-user-select: none;
                 -ms-user-select: none;
                 user-select: none;
                 position: relative;
                 font-style: normal;
-                font-weight: 400;
-                font-size: 14px;
-                line-height: 20px;
+                font-weight: 500;
+                font-size: 16px;
+                line-height: 11px;
                 display: -ms-flexbox;
                 display: flex;
                 -ms-flex-align: center;
                 align-items: center;
-                margin-left: .5rem;
+                margin-left: 0.5rem;
             }
         }
     }
@@ -248,4 +278,50 @@ body {
 
 #centered-toggle-button {
     position: absolute;
+}
+
+.loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 7px solid #f04e4500;
+    border-radius: 50%;
+    border-top: 7px solid #f04d45;
+    width: 50px;
+    height: 50px;
+    -webkit-animation: spin 2s linear infinite;
+    /* Safari */
+    animation: spin 2s linear infinite;
+
+    &-container {
+        top: 0px;
+        left: 0;
+        z-index: 1;
+        display: flex;
+        position: absolute;
+        background-color: #00000085;
+        height: 100%;
+        width: 100%;
+    }
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }

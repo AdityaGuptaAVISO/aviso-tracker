@@ -12,7 +12,7 @@
         "scopes": [ "https://mail.google.com/"]
     },
     "action": {
-      "default_popup": "popup.html"
+      "default_popup": "options.html"
     },
     "background": {
       "service_worker": "background.js"
@@ -25,7 +25,7 @@
       }
     
     ],
-    "options_page": "options.html",
+    "homepage_url":"https://app.aviso.com/",
     "host_permissions": [
       "<all_urls>",
       "https://www.gstatic.com/*",
