@@ -1,9 +1,12 @@
 import mainfest from "../static/manifest.json";
-import { getToken } from "../storage/syncGetters";
-import { setToken, setUserInfo } from "../storage/syncSetters";
-import { google } from "googleapis";
-
-
+import clientSecret from "../client_secret.json";
+import { getRefreshToken, getToken, getUserInfo } from "../storage/syncGetters";
+import {
+  setAuthCode,
+  setRefreshToken,
+  setToken,
+  setUserInfo,
+} from "../storage/syncSetters";
 
 export const googleSignIn = () => {
   const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/`;
@@ -27,22 +30,37 @@ export const googleSignIn = () => {
         url: authUrl.href,
         interactive: true,
       },
-      (redirectUrl) => {
+      async (redirectUrl) => {
         if (redirectUrl) {
           // The ID token is in the URL hash
           const urlHash = redirectUrl.split("#")[1];
           const params = new URLSearchParams(urlHash);
           const jwt = params.get("id_token");
+          const authCode = params.get("code");
 
           // Parse the JSON Web Token
           const base64Url = jwt.split(".")[1];
           const base64 = base64Url.replace("-", "+").replace("_", "/");
-          const token = JSON.parse(atob(base64));
+          const user = JSON.parse(atob(base64));
 
-          const accessToken = redirectUrl.match(/access_token=([^&]*)/)[1];
+          const { avisoUserInfo } = await chrome.storage.sync.get(
+            "avisoUserInfo"
+          );
+          if (avisoUserInfo?.email !== user.email) {
+            return reject(
+              `Please Sign In with this Id ${avisoUserInfo?.email}`
+            );
+          }
+          chrome.runtime.sendMessage(
+            { message: "request_token", authCode },
+            function (response) {
+              console.log("printing token" + response);
+            }
+          );
 
-          setUserInfo(token);
-          setToken(accessToken);
+          const response = await requestTokens(authCode);
+          setUserInfo(user);
+          setAuthCode(authCode);
           return resolve(true);
         }
       }
@@ -50,16 +68,93 @@ export const googleSignIn = () => {
   });
 };
 
-export const getGAPIAccessToken = () => {
-  chrome.storage.local.get(["accessToken"]).then((result) => {
-    console.log("Value currently is " + result.key);
+// Function to request access token and refresh token
+export const requestTokens = async (code) => {
+  return new Promise<Boolean>(async (resolve, reject) => {
+    const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/`;
+    const url = "https://oauth2.googleapis.com/token";
+    const params = new URLSearchParams({
+      code: code,
+      client_id: clientSecret.web.client_id,
+      client_secret: clientSecret.web.client_secret,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code",
+    });
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("requestTokens:", data, response);
+        const accessToken = data.access_token;
+        const refreshToken = data.refresh_token;
+        const expriyTime = data.expires_in;
+        const tokenType = data.token_type;
+
+        setToken(accessToken);
+        setRefreshToken(refreshToken);
+
+        return resolve(data);
+      } else {
+        throw new Error("Failed to retrieve tokens");
+      }
+    } catch (error) {
+      console.error("Error retrieving tokens:", error);
+      // Handle error
+      return reject(error);
+    }
   });
 };
 
+// Function to refresh the access token
+export const refreshAccessToken = async () => {
+  const refreshToken = await getRefreshToken();
+  const url = "https://oauth2.googleapis.com/token";
+  const params = new URLSearchParams({
+    refresh_token: refreshToken,
+    client_id: clientSecret.web.client_id,
+    client_secret: clientSecret.web.client_secret,
+    grant_type: "refresh_token",
+  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log("RT", data);
+      const accessToken = data.access_token;
+      setToken(accessToken);
+      // Update the access token in your application's authentication mechanism
+      // ...
+
+      return accessToken;
+    } else {
+      throw new Error("Failed to refresh access token");
+    }
+  } catch (error) {
+    console.error("Error refreshing access token:", error);
+    // Handle error
+  }
+};
+
 export const getRecentSentMail = () => {
-  return new Promise<any>((resolve, reject) => {
-    const apiUrl =
-      "https://www.googleapis.com/gmail/v1/users/manjupriya.jain@aviso.com/messages";
+  return new Promise<any>(async (resolve, reject) => {
+    const userInfo = await getUserInfo();
+    console.log("UI", userInfo);
+    const apiUrl = `https://www.googleapis.com/gmail/v1/users/${userInfo.email}/messages`;
 
     const url = new URL(apiUrl);
     url.searchParams.set("q", "in:sent");
@@ -73,27 +168,24 @@ export const getRecentSentMail = () => {
         .then((response) => response.json())
         .then((data) => {
           console.log(data);
-          if (data?.error&&Object.keys(data?.error).length > 0) {
-            
-            switch(data.error.code){
-              case 401: 
-                googleSignIn();
-                return reject(data.error)
+          if (data?.error && Object.keys(data?.error).length > 0) {
+            switch (data.error.code) {
+              case 401:
+                return reject(data.error);
             }
           }
-          fetchEmaildetails({ accessToken, message: data.messages[0] })
+          return fetchEmaildetails({ accessToken, message: data.messages[0] })
             .then((res: any) => {
               console.log(res);
               return resolve(res);
             })
             .catch((err) => {
-              reject(err);
+              return reject(err);
             });
-
         })
         .catch((err) => {
           console.error(err);
-          return reject(err)
+          return reject(err);
         });
     });
   });

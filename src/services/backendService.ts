@@ -1,52 +1,41 @@
-export const getLinkId = (payload) => {
-  return new Promise(async (resolve, reject) => {
-    const response: any = await fetch(
-      "https://pf3-alpha.aviso.com/relationships/email_tracker",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    ).catch((err) => reject(err));
+export const whoAmI = async () => {
+  const { cookie } = await chrome.storage.sync.get("cookie");
+  const { domain } = await chrome.storage.sync.get("domain");
 
-    const data = await response?.json();
-    return resolve(data);
-  });
-};
-
-export const emailValidater = (username) => {
+  console.log("login", domain, cookie);
+  let url = new URL(`${domain}/account/whoAmI`);
   return new Promise(async (resolve, reject) => {
-    fetch(
-      `https://app-mirror.aviso.com/account/onsamlsso??user_name=${username}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        resolve(data);
+    fetch(url, {
+      headers: {
+        "Access-Control-Expose-Headers": "Set-Cookie",
+        Cookie: cookie,
+      },
+    })
+      .then((res: Response) => {
+        console.log("res:", res);
+        if (res.ok && res.status) {
+          return res.json();
+        } else {
+          return reject(res);
+        }
       })
-      .catch((error) => {
-        console.error("Error:", error);
-        reject(error);
+      .then((data: any) => {
+        console.log("data:", data);
+        const avisoUserInfo = {
+          currentName: data.currentName,
+          currentUserId: data.currentUserId,
+          current_tenant: data.current_tenant,
+          email: data.email,
+        };
+        chrome.storage.sync.set({ avisoUserInfo }, () => {
+          console.log("userInfo stored successfully");
+        });
+        chrome.storage.sync.set({ cookie }, () => {
+          console.log("cookie stored successfully");
+        });
+      })
+      .catch((error: Error) => {
+        return reject(error);
       });
-  });
-};
-
-export const doLogin = (payload) => {
-  return new Promise(async (resolve, reject) => {
-    const response: any = await fetch(
-      "https://app-mirror.aviso.com//account/login/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    ).catch((err) => reject(err));
-
-    const data = await response?.json();
-    return resolve(data);
   });
 };

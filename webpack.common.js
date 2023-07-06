@@ -11,7 +11,7 @@ module.exports = {
         options: path.resolve('src/options/index.tsx'),
         background: path.resolve('src/background/background.ts'),
         fetchInfoScript: path.resolve('src/contentScript/fetchInfoScript.ts'),
-        contentScript: path.resolve('src/contentScript/index.ts'),
+        contentScript: path.resolve('src/contentScript/contentScript.ts'),
         dashboard: path.resolve('src/dashboard/index.tsx'),
         newTab: path.resolve('src/tabs/index.tsx'),
     },
@@ -45,7 +45,7 @@ module.exports = {
             },
             {
                 test: /\.scss$/,
-                use: ['style-loader','css-loader','sass-loader'],
+                use: ['style-loader', 'css-loader', 'sass-loader'],
             },
             {
                 type: 'assets/resource',
@@ -81,7 +81,7 @@ module.exports = {
         ])
     ],
     resolve: {
-        extensions: ['.tsx', '.js', '.ts', 'scss']
+        extensions: ['.tsx', '.js', '.ts', '.scss']
     },
     output: {
         filename: '[name].js',
@@ -89,14 +89,14 @@ module.exports = {
     },
     optimization: {
         splitChunks: {
-            chunks(chunk){
+            chunks(chunk) {
                 return chunk.name !== 'contentScript';
             }
         }
     }
 }
 
-function getHtmlPlugins (chunks) {
+function getHtmlPlugins(chunks) {
     return chunks.map(chunk => new HtmlPlugin({
         title: 'Aviso Tracker',
         filename: `${chunk}.html`,

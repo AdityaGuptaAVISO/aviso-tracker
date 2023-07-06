@@ -1,18 +1,9 @@
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent } from "react";
 
 import "./popup.scss";
 
+import { logoutUser } from "../services/authServices";
 import { googleSignIn } from "../services/oauthService";
-import ReactModal from "react-modal";
-import { getAvisoUserInfo, getSyncStorage } from "../storage/syncGetters";
-import {
-  validateAuthentication,
-  checkForSSO,
-  userLogin,
-  whoAmI,
-  logoutUser,
-} from "../services/authServices";
-import { ValidateEmail } from "../utils/utils";
 
 interface PopupProps {}
 interface PopupState {
@@ -20,12 +11,13 @@ interface PopupState {
   csrfToken: string;
   isvalid: boolean;
   ssoFlag: boolean;
-  isModalOpen: boolean;
   userName: string;
+  customDomain: string;
   emailError: string;
   loginError: string;
   password: string;
   userInfo: any;
+  gmailUserInfo: any;
 }
 class Popup extends React.Component<PopupProps, PopupState> {
   constructor(props) {
@@ -35,27 +27,24 @@ class Popup extends React.Component<PopupProps, PopupState> {
       csrfToken: "",
       isvalid: false,
       ssoFlag: false,
-      isModalOpen: false,
       userName: "",
+      customDomain: "",
       emailError: "",
       loginError: "",
       password: "",
       userInfo: undefined,
+      gmailUserInfo: undefined,
     };
 
     this.init();
   }
 
-  componentDidMount() {
-    console.log("Component mounted", this.state.userInfo);
-    whoAmI();
-  }
+  componentDidMount() {}
 
   componentDidUpdate(prevProps, prevState) {
     // console.log('Component updated');
     if (prevState.userInfo !== this.state.userInfo) {
-      console.log("Counter value changed");
-      this.render()
+      this.render();
     }
   }
 
@@ -63,29 +52,16 @@ class Popup extends React.Component<PopupProps, PopupState> {
     console.log("Component will unmount");
   }
 
-  init() {
-    getAvisoUserInfo()
-      .then(({ avisoUserInfo }) => {
-        console.log("userInfo", avisoUserInfo);
-        if (!avisoUserInfo?.email) {
-          validateAuthentication().then((data: any) => {
-            console.log("d1", data);
-            if (data?.csrf_token) {
-              this.setState({ csrfToken: data.csrf_token });
-            } else if (data?.email) {
-              this.setState({ userInfo: data });
-            }
-          });
-        } else {
-          this.setState({ userInfo: avisoUserInfo });
-        }
-      })
-      .catch((err) => console.log(err));
+  async init() {
+    const { avisoUserInfo } = await chrome.storage.sync.get("avisoUserInfo");
+    const { userInfo } = await chrome.storage.sync.get("userInfo");
+    console.log("popup", avisoUserInfo);
+    this.setState({ userInfo: avisoUserInfo, gmailUserInfo: userInfo });
   }
 
-  onUserNameChanged = (e: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ userName: e.target.value, emailError: "" }, () => {
-      if (e.target.value.length > 0 && this.state.password.length > 0) {
+  onDomain = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ customDomain: e.target.value }, () => {
+      if (this.state.customDomain.length > 0 && e.target.value.length > 0) {
         this.setState({ isvalid: true });
       } else {
         this.setState({ isvalid: false });
@@ -93,44 +69,16 @@ class Popup extends React.Component<PopupProps, PopupState> {
     });
   };
 
-  onPasswordChanged = (e: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ password: e.target.value }, () => {
-      if (this.state.userName.length > 0 && e.target.value.length > 0) {
-        this.setState({ isvalid: true });
-      } else {
-        this.setState({ isvalid: false });
-      }
-    });
-  };
-
-  loginEmailValidate = () => {
-    if (ValidateEmail(this.state.userName)) {
-      checkForSSO(this.state.userName)
-        .then((data: any) => {
-          if (data["_error"]) {
-            this.setState({ emailError: data.message });
-          } else {
-            this.setState({ ssoFlag: data.samlsso });
-          }
-        })
-        .catch((err) => console.error(err));
-    } else {
-      this.setState({ emailError: "Provide valid Username" });
+  setDomain = () => {
+    chrome.tabs.create({ url: this.state.customDomain });
+    const domain = this.state.customDomain.includes("https://")
+      ? this.state.customDomain
+      : `https://${this.state.customDomain}`;
+    if (domain.includes("https://")) {
+      chrome.storage.sync.set({ domain }, async () => {
+        const userInfo = await chrome.storage.sync.get("userInfo");
+      });
     }
-  };
-
-  loginValidate = async () => {
-    const csrfmiddlewaretoken = await getSyncStorage("csrftoken");
-    userLogin({
-      username: this.state.userName,
-      password: this.state.password,
-      csrfmiddlewaretoken: this.state.csrfToken,
-    })
-      .then((res) => {
-        this.setState({userInfo:res})
-        // googleSignIn();
-      })
-      .catch((err) => this.setState({ loginError: err }));
   };
 
   render() {
@@ -138,31 +86,23 @@ class Popup extends React.Component<PopupProps, PopupState> {
       <div className="error">{error ? "* " + error : ""}</div>
     );
 
-    const renderLoginPage = () => {
+    const renderCustomBrowser = () => {
       return (
         <div className="warning">
           <div className="warning-content">
             <input
               className="warning-input-box"
-              placeholder="Username (Email)"
-              value={this.state.userName}
-              onChange={this.onUserNameChanged}
-              onBlur={this.loginEmailValidate}
+              placeholder="Custom Domain"
+              value={this.state.customDomain}
+              onChange={this.onDomain}
             ></input>
+            <label className="custom-domain-hint">domain.app.aviso.com</label>
             {renderErrorMessage(this.state.emailError)}
-            <input
-              type="password"
-              className="warning-input-box"
-              placeholder="Password"
-              value={this.state.password}
-              onChange={this.onPasswordChanged}
-            ></input>
-            {renderErrorMessage(this.state.loginError)}
             <button
               className={"button " + (this.state.isvalid ? "" : "disabled")}
-              onClick={() => this.loginValidate()}
+              onClick={() => this.setDomain()}
             >
-              SIGN IN
+              Continue
             </button>
           </div>
         </div>
@@ -174,7 +114,9 @@ class Popup extends React.Component<PopupProps, PopupState> {
         <div className="content">
           <div className="card">
             <label className="card-title">Name</label>
-            <label className="card-value">{this.state.userInfo.name}</label>
+            <label className="card-value">
+              {this.state.userInfo.currentName}
+            </label>
           </div>
           <div className="card">
             <label className="card-title">Email</label>
@@ -192,21 +134,53 @@ class Popup extends React.Component<PopupProps, PopupState> {
       );
     };
 
+    const renderGoogleSignIn = () => {
+      return (
+        <div className="warning">
+          <div className="warning-content">
+            {renderErrorMessage(this.state.emailError)}
+            <div
+              className="google-btn"
+              onClick={() => {
+                googleSignIn()
+                  .then()
+                  .catch((err) => {
+                    this.setState({ emailError: err });
+                  });
+              }}
+            >
+              <div className="google-icon-wrapper">
+                <img
+                  className="google-icon"
+                  src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+                />
+              </div>
+              <p className="btn-text">
+                <b>Sign in with Google</b>
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div className="aviso-tracker-popup">
         <div className="header">
           <img className="header-icon" src="./logo.png" />
           <h2> Aviso Mail Tracker</h2>
         </div>
-        {this.state.userInfo?.email ? renderInfoPage() : renderLoginPage()}
+        {!this.state.userInfo?.email && renderCustomBrowser()}
+        {this.state.userInfo?.email && renderInfoPage()}
+        {this.state.gmailUserInfo?.email && renderGoogleSignIn()}
         <button
+        className="button"
           onClick={() => {
             logoutUser();
             this.setState({ userInfo: undefined });
-            whoAmI();
           }}
         >
-          Test
+          Logout
         </button>
       </div>
     );

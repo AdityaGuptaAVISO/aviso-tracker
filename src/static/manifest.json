@@ -15,13 +15,25 @@
       "default_popup": "popup.html"
     },
     "background": {
-      "service_worker": "background.js",
-      "type": "module"
+      "service_worker": "background.js"
     },
+    "content_scripts": [
+      {
+        "matches": ["https://mail.google.com/*"],
+        "match_origin_as_fallback": true,
+        "js": ["contentScript.js"]
+      }
+    
+    ],
     "options_page": "options.html",
     "host_permissions": [
-      "<all_urls>"
+      "<all_urls>",
+      "https://www.gstatic.com/*",
+      "https://mail.google.com/*"
     ],
+    "externally_connectable": {
+      "matches": ["https://mail.google.com/*","https://*.aviso.com/*"]
+    },
     "permissions": [
       "identity",
       "identity.email",

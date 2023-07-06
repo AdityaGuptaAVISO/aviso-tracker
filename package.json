@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "autoprefixer": "^10.4.14",
+        "buffer": "^6.0.3",
         "postcss": "^8.4.21",
         "react-modal": "^3.16.1",
         "react-router-dom": "^6.9.0",
