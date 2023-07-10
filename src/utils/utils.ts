@@ -19,18 +19,30 @@ export const ValidateEmail = (mail: string) => {
   } else if (mail.length === 0) {
     return false;
   }
-
-  alert("You have entered an invalid email address!");
   return false;
 };
 
 export const extractGmail = (gmails: string) => {
+  if (ValidateEmail(gmails)) {
+    return gmails;
+  }
+
   const emailRegex = /<([^>]+)>/;
   return gmails.split(",")?.map((gmail: string) => {
     return gmail && gmail.match(emailRegex)[1];
   });
 };
 
+export const getMailId = (data: string) => {
+  // Regular expression pattern to extract the email ID
+  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})/;
+
+  // Extract the email ID using match()
+  const emailMatch = data.match(emailRegex);
+
+  // Check if a match is found and retrieve the email ID
+  return emailMatch ? emailMatch[0] : null;
+};
 // export const encryptData = (data: string, key: string): string => {
 //   const encryptedData = CryptoJS.AES.encrypt(data, key).toString();
 //   return encryptedData;

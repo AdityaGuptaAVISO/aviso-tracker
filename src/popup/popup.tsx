@@ -51,6 +51,7 @@ class Popup extends React.Component<PopupProps, PopupState> {
           break;
         case "Failed":
           self.setState({ showLoader: false, error: request.error });
+          break;
       }
     });
   }
@@ -153,12 +154,14 @@ class Popup extends React.Component<PopupProps, PopupState> {
     const renderInfoPage = () => {
       return (
         <div className="content">
-          <div className="profile-container">
-            <img
-              className="profile-image"
-              src={this.state.gmailUserInfo.picture}
-            />
-          </div>
+          {this.state?.gmailUserInfo?.picture && (
+            <div className="profile-container">
+              <img
+                className="profile-image"
+                src={this.state.gmailUserInfo?.picture}
+              />
+            </div>
+          )}
           <div className="card">
             <label className="card-title">Name</label>
             <label className="card-value">
@@ -208,7 +211,7 @@ class Popup extends React.Component<PopupProps, PopupState> {
       <div className="aviso-tracker-popup">
         {this.state.showLoader && (
           <div className="loader-container">
-            <div className="loader"></div>
+            <div className="loader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
           </div>
         )}
         <div className="header">

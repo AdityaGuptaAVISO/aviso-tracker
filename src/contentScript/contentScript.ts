@@ -3,13 +3,15 @@ import {
   refreshAccessToken,
 } from "../services/oauthService";
 import { getAvisoUserInfo } from "../storage/syncGetters";
-import { extractGmail, getUniqueKey } from "../utils/utils";
+import { extractGmail, getMailId, getUniqueKey } from "../utils/utils";
 
 // let initialize: any;
 // let uuid: string = "";
 // let subject: string = "";
 let counter: number = 0;
+let timeout: number = 5000;
 let sendCounter: number = 0;
+const altText = "tracker";
 
 const insertImage = async (index) => {
   const key = getUniqueKey();
@@ -31,9 +33,13 @@ const insertImage = async (index) => {
 
   const imageElement = document.createElement("img");
   imageElement.src = link;
-  imageElement.alt = "aviso-tracker";
+  // imageElement.onerror = function () {
+  // this.src = chrome.runtime.getURL("pixel.png");
+  // };
+  imageElement.alt = altText;
   imageElement.height = 20;
   imageElement.width = 20;
+
   const brElement = document.createElement("br");
   linkElement.appendChild(brElement);
   linkElement.appendChild(brElement);
@@ -57,7 +63,7 @@ const getMailBody = () => {
 };
 
 const setMailBody = (mailBody: any, index: number) => {
-  const testFrame = mailBody.querySelector('[alt="aviso-tracker"]');
+  const testFrame = mailBody.querySelector(`[alt="${altText}"]`);
   if (!testFrame) {
     insertImage(index);
   }
@@ -102,15 +108,9 @@ const requestMailInfo = (uuid: string, subject: string) => {
         };
 
         await chrome.runtime.sendMessage(
-          { message: "validate" },
-          async (res) => {
-            console.log("reps", res);
-            await chrome.runtime.sendMessage(
-              { message: "send_payload", payload },
-              (res) => {
-                console.log("bg", res);
-              }
-            );
+          { message: "send_payload", payload },
+          (res) => {
+            console.log("bg", res);
           }
         );
 
@@ -132,53 +132,13 @@ const requestMailInfo = (uuid: string, subject: string) => {
     });
 };
 
-const setComposeButton = async () => {
-  const composeButton: any = document.querySelector(".T-I.T-I-KE.L3");
-  console.log("comp:", composeButton);
-  if (!composeButton) {
-    setTimeout(() => {
-      setComposeButton();
-    }, 1000);
-  }
-  const { isSignedIn } = await chrome.storage.sync.get("isSignedIn");
-  const dialog: HTMLDialogElement | any =
-    document.getElementById("aviso-sigin-modal");
-
-  if (isSignedIn) {
-    composeButton?.addEventListener("click", (event: any) => {
-      setTimeout(() => {
-        sendCounter = 0;
-        console.log("clicked");
-        const mailBody: any = getMailBody();
-        mailBody.forEach(setMailBody);
-        setSendButton();
-      }, 1000);
-    });
-    dialog?.close();
-  } else {
-    if (dialog) {
-      dialog.showModal();
-      const siginButton: HTMLDialogElement | any =
-        document.getElementById("aviso-sigin-button");
-      const closeButton: HTMLDialogElement | any =
-        document.getElementById("aviso-close-button");
-      siginButton.addEventListener("click", (event: any) => {
-        console.log("sign");
-      });
-      closeButton.addEventListener("click", (event: any) => {
-        dialog.close();
-      });
-    }
-  }
-};
-
 const setButtonListener = (sendButton: any, index: number) => {
   sendButton?.addEventListener("click", (eve) => {
     // Send button clicked, perform your desired action here
     console.log("send", index);
     counter = 0;
 
-    const testFrame: any = document.querySelectorAll('[alt="aviso-tracker"]');
+    const testFrame: any = document.querySelectorAll(`[alt="${altText}"]`);
     const uuid = testFrame[index].src.split("uuid=").pop().split("&")[0];
     const subjectField: any = document.querySelectorAll('[name="subjectbox"]');
     const subject = subjectField[index]?.value;
@@ -211,49 +171,12 @@ const setSendButton = () => {
   }
 };
 
-// const composeButton: any = document.querySelector(".dC");
-const setDraftListListener = () => {
-  const setDraftListener = (draft: any, index: number) => {
-    draft?.addEventListener("click", (eve) => {
-      console.log("draft list clicked");
-      // Send button clicked, perform your desired action here
-      setTimeout(() => {
-        setSendButton();
-      }, 1000);
-      console.log("Send button clicked!", eve);
-    });
-  };
-  const draftList: any = document.querySelectorAll(".zA.yO");
-  console.log("draft list:", draftList);
-  draftList?.forEach(setDraftListener);
-};
-
-const setDraftButton = () => {
-  const draftButton: any = document.querySelector(".TN.bzz.aHS-bnq");
-  console.log("draft:", draftButton);
-  if (!draftButton) {
-    setTimeout(() => {
-      setDraftButton();
-    }, 1000);
-  }
-  // composeButtonEventListener
-  draftButton?.addEventListener("click", (event: any) => {
-    setTimeout(() => {
-      console.log("draft clicked");
-
-      setDraftListListener();
-    }, 500);
+const init = async () => {
+  timeout = 100;
+  await chrome.runtime.sendMessage({ message: "validate" }, (res) => {
+    console.log("bg", res);
   });
 };
-
-async function init() {
-  // send the data to service worker
-  setComposeButton();
-  setDraftButton();
-  setSendButton();
-}
-
-init();
 
 const showModal = () => {
   const modal = document.createElement("dialog");
@@ -335,3 +258,64 @@ const insertButton = () => {
     searchBox.insertAdjacentElement("afterend", button);
   }
 };
+
+window.addEventListener("click", async function (ele: any) {
+  const { userInfo } = await chrome.storage.sync.get("userInfo");
+  if (userInfo.email === getMailId(document.title)) {
+    const clickedButton: Text = ele.target?.childNodes[0];
+    if (clickedButton?.data === "Compose") {
+      console.log("compose clicked");
+      this.setTimeout(() => {
+        const mailBody: any = getMailBody();
+        mailBody.forEach(setMailBody);
+        setSendButton();
+      }, timeout);
+    }
+  }
+});
+
+window.addEventListener("load", async (ele) => {
+  
+  const { userInfo } = await chrome.storage.sync.get("userInfo");
+  registerMessageEventListner();
+  setTimeout(() => {
+    if (userInfo.email === getMailId(document.title)) {
+      init();
+    } else {
+      alert("Please do signIn with Aviso Email Tracker");
+    }
+  }, 1000);
+});
+
+function registerMessageEventListner() {
+  chrome.runtime.onMessage.addListener(function (
+    request,
+    sender,
+    sendResponse
+  ) {
+    switch (request.action) {
+      case "logged_in":
+        alert("Please do signIn with Aviso Email Tracker");
+        sendResponse({ farewell: "goodbye" });
+        break;
+      case "Failed":
+        alert("Please do signIn with Aviso Email Tracker");
+        break;
+    }
+  });
+}
+
+window.addEventListener("beforeunload", () => {
+  console.log("unload");
+});
+
+const hashChange = async (ele: HashChangeEvent) => {
+  const { userInfo } = await chrome.storage.sync.get("userInfo");
+  if (userInfo.email === getMailId(document.title)) {
+    if (ele.newURL.includes("compose")) {
+      setSendButton();
+    }
+  }
+};
+
+window.addEventListener("hashchange", hashChange);

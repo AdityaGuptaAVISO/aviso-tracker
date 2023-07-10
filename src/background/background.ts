@@ -3,7 +3,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     case "send_payload":
       sendMailInfo(request.payload)
         .then((res) => {
-          console.log(res);
           sendResponse({ message: "success", payload: res });
         })
         .catch((err) => {
@@ -16,8 +15,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
       await whoAmI(domain, cookie)
         .then((res) => {
-          console.log(res);
-          sendResponse({ message: "success", payload: res });
+          sendResponse({ success: true });
         })
         .catch((err) => {
           sendResponse({ message: "failed", payload: err });
@@ -40,7 +38,7 @@ const whoAmI = (domain, cookie) => {
         if (res.ok && res.status) {
           return res.json();
         } else {
-          if (res.status >= 400 || res.status < 500) {
+          if (res.status >= 300 || res.status < 500) {
             await chrome.storage.sync.remove("cookie");
             await chrome.storage.sync.remove("avisoUserInfo");
             chrome.storage.sync.set({ isSignedIn: false }, () => {
@@ -71,6 +69,15 @@ const whoAmI = (domain, cookie) => {
         }
       })
       .then((data: any) => {
+        if (data?.current_tenant === "administrative.domain") {
+          chrome.runtime.sendMessage(
+            { action: "Failed", error: { message: "Please switch to tenant" } },
+            function (res) {
+              console.log("Response from content script:", res);
+            }
+          );
+          return reject(data);
+        }
         const avisoUserInfo = {
           currentName: data.currentName,
           currentUserId: data.currentUserId,
@@ -175,6 +182,9 @@ const sendMailInfo = async (payload) => {
         case 401:
           chrome.storage.sync.remove("cookie");
           break;
+          case 500:
+            
+            break;
       }
     })
     .then((data: any) => {
@@ -183,6 +193,12 @@ const sendMailInfo = async (payload) => {
       // return resolve(data);
     })
     .catch((err) => {
+      chrome.runtime.sendMessage(
+        { action: "Failed", err },
+        function (response) {
+          console.log("Response from content script:", response);
+        }
+      );
       console.warn(err);
     });
 };

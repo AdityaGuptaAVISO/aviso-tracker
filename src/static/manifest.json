@@ -57,5 +57,11 @@
           "mac": "Command+B"
         }
       }
-    }
+    },
+    "web_accessible_resources": [
+      {
+        "resources": [ "pixel.png", "logo.png" ],
+        "matches": ["https://*.google.com/*"]
+      }
+    ]
   }
