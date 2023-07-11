@@ -103,7 +103,7 @@ class Popup extends React.Component<PopupProps, PopupState> {
   handleGoogleSignIn = async () => {
     this.setState({ showLoader: true, error: undefined });
     await googleSignIn()
-      .then((res) => {
+      .then(async (res) => {
         console.log(res);
 
         this.setState({
@@ -112,6 +112,9 @@ class Popup extends React.Component<PopupProps, PopupState> {
           gmailUserInfo: res,
         });
         chrome.tabs.reload();
+        await chrome.runtime.sendMessage({ message: "reloadGmail" }, (res) => {
+          console.log("bg", res);
+        });
       })
       .catch((err) => {
         this.setState({ showLoader: false, error: err });
@@ -211,7 +214,16 @@ class Popup extends React.Component<PopupProps, PopupState> {
       <div className="aviso-tracker-popup">
         {this.state.showLoader && (
           <div className="loader-container">
-            <div className="loader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div className="loader">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
           </div>
         )}
         <div className="header">

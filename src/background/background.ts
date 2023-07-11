@@ -1,29 +1,3 @@
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  switch (request.message) {
-    case "send_payload":
-      sendMailInfo(request.payload)
-        .then((res) => {
-          sendResponse({ message: "success", payload: res });
-        })
-        .catch((err) => {
-          sendResponse({ message: "failed", payload: err });
-        });
-      break;
-    case "validate":
-      const { cookie } = await chrome.storage.sync.get("cookie");
-      const { domain }: any = await chrome.storage.sync.get("domain");
-
-      await whoAmI(domain, cookie)
-        .then((res) => {
-          sendResponse({ success: true });
-        })
-        .catch((err) => {
-          sendResponse({ message: "failed", payload: err });
-        });
-      break;
-  }
-});
-
 const whoAmI = (domain, cookie) => {
   let url = new URL(`${domain}/account/whoAmI`);
 
@@ -107,6 +81,53 @@ const whoAmI = (domain, cookie) => {
   });
 };
 
+function reloadGmail(urlPattern) {
+  chrome.tabs.query({ url: urlPattern }, function (tabs) {
+    if (tabs.length > 0) {
+      var tabId = tabs[0].id;
+      reloadTab(tabId);
+    }
+  });
+}
+
+function reloadTab(tabId) {
+  chrome.tabs.reload(tabId);
+}
+
+function closeTab(tabId) {
+  chrome.tabs.remove(tabId);
+}
+
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  switch (request.message) {
+    case "send_payload":
+      sendMailInfo(request.payload)
+        .then((res) => {
+          sendResponse({ message: "success", payload: res });
+        })
+        .catch((err) => {
+          sendResponse({ message: "failed", payload: err });
+        });
+      break;
+    case "validate":
+      const { cookie } = await chrome.storage.sync.get("cookie");
+      const { domain }: any = await chrome.storage.sync.get("domain");
+
+      await whoAmI(domain, cookie)
+        .then((res) => {
+          sendResponse({ success: true });
+        })
+        .catch((err) => {
+          sendResponse({ message: "failed", payload: err });
+        });
+      break;
+    case "reloadGmail":
+      reloadGmail("https://mail.google.com/*");
+
+      break;
+  }
+});
+
 chrome.runtime.onInstalled.addListener((details) => {
   console.log("I just installed chrome extension");
 
@@ -143,17 +164,14 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
             .join("; ");
 
           (async () => {
-            const res = await whoAmI(domain, cookie);
+            await whoAmI(domain, cookie)
+              .then((res) => {})
+              .catch((err) => {});
+
             const [tab] = await chrome.tabs.query({
               active: true,
               lastFocusedWindow: true,
             });
-            const response = await chrome.tabs.sendMessage(tab.id, {
-              message: "logged_in",
-              res,
-            });
-
-            console.log(response);
           })();
         });
       }
@@ -182,9 +200,8 @@ const sendMailInfo = async (payload) => {
         case 401:
           chrome.storage.sync.remove("cookie");
           break;
-          case 500:
-            
-            break;
+        case 500:
+          break;
       }
     })
     .then((data: any) => {

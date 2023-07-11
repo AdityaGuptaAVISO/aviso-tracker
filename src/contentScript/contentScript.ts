@@ -5,9 +5,6 @@ import {
 import { getAvisoUserInfo } from "../storage/syncGetters";
 import { extractGmail, getMailId, getUniqueKey } from "../utils/utils";
 
-// let initialize: any;
-// let uuid: string = "";
-// let subject: string = "";
 let counter: number = 0;
 let timeout: number = 5000;
 let sendCounter: number = 0;
@@ -132,42 +129,24 @@ const requestMailInfo = (uuid: string, subject: string) => {
     });
 };
 
-const setButtonListener = (sendButton: any, index: number) => {
-  sendButton?.addEventListener("click", (eve) => {
-    // Send button clicked, perform your desired action here
-    console.log("send", index);
-    counter = 0;
+const handleSend = (ele) => {
+  const sendButtons: any = Array.from(document.querySelectorAll(".dC"));
+  const selectedIndex = sendButtons.findIndex((button) => {
+    return button.firstChild.id === ele.target.id;
+  });
 
+  if (selectedIndex >= 0) {
     const testFrame: any = document.querySelectorAll(`[alt="${altText}"]`);
-    const uuid = testFrame[index].src.split("uuid=").pop().split("&")[0];
+    const uuid = testFrame[selectedIndex]?.src
+      ?.split("uuid=")
+      ?.pop()
+      ?.split("&")[0];
     const subjectField: any = document.querySelectorAll('[name="subjectbox"]');
-    const subject = subjectField[index]?.value;
-
+    const subject = subjectField[selectedIndex]?.value;
     setTimeout(() => {
       console.log("sent clicked");
       requestMailInfo(uuid, subject);
     }, 1000);
-    console.log("Send button clicked!", eve);
-  });
-};
-
-const setSendButton = () => {
-  const sendButtons = document.querySelectorAll(".dC")
-    ? document.querySelectorAll(".dC")
-    : [];
-  console.log("send:", sendButtons);
-  if (sendButtons.length === 0 && sendCounter++ < 5) {
-    setTimeout(() => {
-      setSendButton();
-    }, 1000);
-  }
-
-  // sendButtons?.forEach((sendButton: any, index: number) => {
-  if (sendButtons.length > 0) {
-    // sendButtonEventListener
-    sendButtons.forEach(setButtonListener);
-  } else {
-    // setTimeout(captureSendButton, 3000); // Retry after 1 second if the send button is not found
   }
 };
 
@@ -268,18 +247,18 @@ window.addEventListener("click", async function (ele: any) {
       this.setTimeout(() => {
         const mailBody: any = getMailBody();
         mailBody.forEach(setMailBody);
-        setSendButton();
       }, timeout);
+    } else if (clickedButton?.data == "Send") {
+      handleSend(ele);
     }
   }
 });
 
 window.addEventListener("load", async (ele) => {
-  
   const { userInfo } = await chrome.storage.sync.get("userInfo");
-  registerMessageEventListner();
   setTimeout(() => {
     if (userInfo.email === getMailId(document.title)) {
+      registerMessageEventListner();
       init();
     } else {
       alert("Please do signIn with Aviso Email Tracker");
@@ -308,14 +287,3 @@ function registerMessageEventListner() {
 window.addEventListener("beforeunload", () => {
   console.log("unload");
 });
-
-const hashChange = async (ele: HashChangeEvent) => {
-  const { userInfo } = await chrome.storage.sync.get("userInfo");
-  if (userInfo.email === getMailId(document.title)) {
-    if (ele.newURL.includes("compose")) {
-      setSendButton();
-    }
-  }
-};
-
-window.addEventListener("hashchange", hashChange);
